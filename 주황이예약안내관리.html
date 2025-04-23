@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>에이트스튜디오주황 예약 현황</title>
+    <style>
+        /* ========== CSS 스타일 (반응형 적용) ========== */
+        * { /* 모든 요소에 box-sizing 적용 (padding/border가 너비에 포함됨) */
+            box-sizing: border-box;
+        }
+        body { font-family: sans-serif; padding: 10px; font-size: 14px; background-color: #f8f9fa; margin: 0;} /* body 기본 마진 제거 */
+        .container { max-width: 800px; margin: 15px auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #ff6f00; margin-bottom: 30px; font-size: 1.8em; }
+        h3 { color: #e65100; margin-top: 0;}
+        .section { margin-bottom: 25px; }
+        .section h2 { border-bottom: 2px solid #ffcc80; padding-bottom: 8px; font-size: 1.2em; color: #333; }
+        label { font-weight: bold; margin-right: 8px; }
+        input[type="date"] { padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; height: 38px; /* 버튼과 높이 유사하게 */}
+        button { padding: 9px 18px; cursor: pointer; background-color: #ff9800; color: white; border: none; border-radius: 4px; font-size: 0.95em; transition: background-color 0.2s; vertical-align: middle; /* 다른 요소와 세로 정렬 */}
+
+        /* --- 날짜 선택 섹션 반응형 --- */
+        .date-picker-section {
+            display: flex;      /* Flexbox 적용 */
+            flex-wrap: wrap;    /* 작은 화면에서 줄바꿈 허용 */
+            align-items: center;/* 세로 중앙 정렬 */
+            gap: 10px;          /* 요소 사이 간격 */
+        }
+        .date-picker-section label { margin-right: 0; } /* gap 사용 시 불필요 */
+        .date-picker-section input[type="date"] { flex-grow: 1; min-width: 150px; } /* 너비 유연하게 */
+        .date-picker-section button { flex-shrink: 0; } /* 버튼 줄어들지 않게 */
+
+
+        ul { list-style: none; padding-left: 0; }
+        li.booking-item {
+            border: 1px solid #eee; padding: 12px 18px; margin-bottom: 8px; cursor: pointer;
+            background-color: #fff; transition: background-color 0.2s, border-left-color 0.2s;
+            border-radius: 4px; border-left: 3px solid transparent;
+        }
+        li.booking-item:hover { background-color: #fff3e0; }
+        li.booking-item.selected { background-color: #fff3e0; border-left: 3px solid #ff9800; font-weight: bold;}
+
+        /* --- 상세 정보 영역 --- */
+        #booking-details {
+            margin-top: 30px; padding: 25px; border: 1px solid #ffe0b2;
+            background-color: #fffaf0; border-radius: 5px; display: none;
+        }
+        #booking-details p { margin: 10px 0; line-height: 1.7; color: #444; }
+        #booking-details strong { display: inline-block; min-width: 95px; color: #555; font-weight: 600;}
+
+        /* --- 상세 정보 하단 버튼 --- */
+        #detail-actions {
+            margin-top: 20px; border-top: 1px solid #eee; padding-top: 18px; text-align: center;
+            display: flex; /* Flexbox 적용 */
+            justify-content: center; /* 가운데 정렬 */
+            flex-wrap: wrap; /* 버튼 많아지면 줄바꿈 */
+            gap: 10px; /* 버튼 사이 간격 */
+        }
+        #detail-actions button { background-color: #ffa726; margin: 0; } /* 개별 마진 제거 (gap 사용) */
+        #detail-actions button:hover { background-color: #ff9800; }
+
+        /* --- 안내문 출력 영역 --- */
+        #message-output-section { margin-top: 30px; display: none; }
+        #message-output-area { width: 100%; /* 부모 너비에 맞춤 */ font-size: 0.95em; padding: 10px; border: 1px solid #ccc; border-radius: 4px; line-height: 1.6; }
+        #copy-message-button { background-color: #607d8b; }
+        #copy-message-button:hover { background-color: #546e7a; }
+        #copy-feedback-msg { margin-left: 10px; color: green; font-weight: bold;}
+
+        /* --- 로딩 인디케이터 --- */
+        #loading { display: none; padding: 15px; background-color: #fffde7; border: 1px solid #fff9c4; border-radius: 4px; margin-bottom: 15px; text-align: center; color: #555; }
+
+
+        /* ======================================== */
+        /* ========== 미디어 쿼리 (모바일) ========== */
+        /* ======================================== */
+        @media (max-width: 600px) { /* 화면 너비 600px 이하일 때 적용 */
+            body { font-size: 15px; padding: 5px; } /* 모바일 기본 글자 크기/패딩 조정 */
+            .container { padding: 15px; margin: 10px auto; } /* 컨테이너 패딩 조정 */
+            h1 { font-size: 1.6em; margin-bottom: 20px; }
+
+            .date-picker-section { gap: 8px; } /* 모바일에서 간격 약간 줄임 */
+            .date-picker-section input[type="date"] { min-width: 130px; } /* 날짜 선택 최소 너비 조정 */
+
+            li.booking-item { padding: 10px 12px; } /* 리스트 항목 패딩 조정 */
+
+            #booking-details { padding: 15px; }
+            #booking-details p { margin: 8px 0; line-height: 1.6; }
+            #booking-details strong {
+                min-width: auto; /* 최소 너비 제거 */
+                display: block; /* 레이블을 위로 올림 */
+                margin-bottom: 2px; /* 값과의 간격 */
+                font-size: 0.9em;
+                color: #666;
+            }
+
+            /* 상세 정보 하단 버튼 세로 쌓기 */
+            #detail-actions {
+                flex-direction: column; /* 세로 방향으로 변경 */
+                align-items: stretch; /* 버튼 너비 100%로 늘림 */
+                gap: 8px; /* 세로 간격 */
+            }
+            #detail-actions button {
+                width: 100%; /* 버튼 너비 꽉 채움 */
+                padding: 12px 15px; /* 버튼 크기 키워서 누르기 쉽게 */
+                font-size: 1em;
+            }
+
+            #message-output-area { font-size: 1em; }
+            #copy-message-button { width: 100%; margin-top: 5px; } /* 복사 버튼도 너비 100% */
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍊 에이트스튜디오주황 예약 현황 🍊</h1>
+
+        <div class="section">
+            <label for="date-picker">날짜 선택:</label>
+            <input type="date" id="date-picker">
+            <button onclick="fetchBookings()">조회</button>
+        </div>
+
+        <div id="loading">🔄 데이터를 불러오는 중입니다...</div>
+
+        <div class="section" id="today-section" style="display: none;">
+            <h2>
+                <span id="selected-date-label"></span>
+                (<span id="selected-dow-label"></span>)
+                오늘 이용 목록
+            </h2>
+            <ul id="today-list"></ul>
+        </div>
+
+        <div class="section" id="tomorrow-section" style="display: none;">
+            <h2>
+                <span id="next-date-label"></span>
+                (<span id="next-dow-label"></span>)
+                내일 이용 목록
+            </h2>
+            <ul id="tomorrow-list"></ul>
+        </div>
+
+        <div id="booking-details" style="display: none;">
+            <h3>선택된 예약 상세 정보</h3>
+            <p><strong>예약자명:</strong> <span id="detail-name"></span></p>
+            <p><strong>연락처:</strong> <span id="detail-phone"></span></p>
+            <p><strong>이용일:</strong> <span id="detail-date"></span> (<span id="detail-dow"></span>)</p>
+            <p><strong>이용시간:</strong> <span id="detail-start-time"></span> ~ <span id="detail-end-time"></span> (<span id="detail-duration"></span>)</p>
+            <p><strong>이용인원:</strong> <span id="detail-people"></span></p>
+            <p><strong>촬영용도:</strong> <span id="detail-purpose"></span></p>
+            <p><strong>총액:</strong> <span id="detail-amount"></span></p>
+            <p><strong>예약사이트:</strong> <span id="detail-site"></span></p>
+
+
+            <div id="detail-actions" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; text-align: center;">
+                 <button id="btn-confirm-guide" style="margin: 5px;">예약확정안내</button>
+                 <button id="btn-tomorrow-guide" style="margin: 5px;">내일이용안내</button>
+                 <button id="btn-complete-guide" style="margin: 5px;">이용완료안내</button>
+            </div>
+        </div> 
+        <div id="message-output-section" class="section" style="display: none; margin-top: 30px;">
+            <h3>생성된 안내문</h3>
+            <textarea id="message-output-area" rows="15" style="width: 98%; font-size: 0.95em; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" readonly></textarea>
+            <div style="text-align: right; margin-top: 10px;">
+                 <button id="copy-message-button" onclick="copyGeneratedMessage()">안내문 복사</button>
+                 <span id="copy-feedback-msg" style="margin-left: 10px; color: green;"></span>
+            </div>
+        </div>
+
+    </div>    <script>
+        // !!! 여기에 Google Apps Script 웹 앱 URL을 정확히 붙여넣으세요 !!!
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxR_c6yX2cUp9TZ5Xr4b0w6-h-JQh1VJwhyskqlVs8FW1Zpcc4T5QEKKFBazaNMMPrkSA/exec'; // <<<---------- 여기!!!
+
+        // 전역 변수
+        let currentBookingsData = {};
+        let selectedListItem = null; // 현재 선택(강조)된 리스트 아이템
+        let currentlyDisplayedBookingIndex = null; // 현재 상세 정보가 표시된 예약의 rowIndex
+        let currentlyDisplayedListType = null; // 현재 상세 정보가 표시된 리스트 타입 ('today' or 'tomorrow')
+
+        // 페이지 로드 시 오늘 날짜 설정
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                const today = new Date();
+                document.getElementById('date-picker').value = formatDateForInput(today);
+                console.log("페이지 로드: 오늘 날짜 설정 완료");
+            } catch (error) {
+                console.error("초기 날짜 설정 중 오류:", error);
+                alert("페이지 초기화 중 오류가 발생했습니다. 개발자 콘솔을 확인하세요.");
+            }
+        });
+
+        // Date 객체를<y_bin_46>-MM-DD 형식으로 (input[type=date] 용)
+        function formatDateForInput(date) {
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        // 예약 정보 가져오기 함수
+        async function fetchBookings() {
+            console.log("'조회' 버튼 클릭됨");
+            const selectedDate = document.getElementById('date-picker').value;
+            if (!selectedDate) {
+                alert('날짜를 선택해주세요.');
+                return;
+            }
+
+            showLoading(true);
+            hideResultsAndDetails();
+
+            try {
+                console.log(`Apps Script 호출: ${WEB_APP_URL}?date=${selectedDate}`);
+                const response = await fetch(`${WEB_APP_URL}?date=${selectedDate}`);
+                console.log("Apps Script 응답 상태:", response.status);
+
+                if (!response.ok) {
+                    let errorText = `HTTP 오류! 상태: ${response.status}`;
+                    try {
+                        const text = await response.text();
+                        console.error("서버 응답 텍스트:", text);
+                        errorText += `\n응답: ${text.substring(0, 200)}`;
+                    } catch (e) {}
+                    throw new Error(errorText);
+                }
+
+                const data = await response.json();
+                console.log("Apps Script로부터 받은 데이터:", data);
+
+                if (data.error) {
+                    throw new Error(`서버 오류: ${data.error}`);
+                }
+
+                currentBookingsData = data;
+                displayResults(data);
+
+            } catch (error) {
+                console.error('예약 정보 조회 실패:', error);
+                alert(`예약 정보를 가져오는 중 오류가 발생했습니다:\n${error.message}\n\n(자세한 내용은 F12 개발자 콘솔을 확인하세요)`);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 로딩 표시/숨김
+        function showLoading(isLoading) {
+            document.getElementById('loading').style.display = isLoading ? 'block' : 'none';
+        }
+
+        // 결과 영역 및 상세/메시지 숨기기
+        function hideResultsAndDetails() {
+            document.getElementById('today-section').style.display = 'none';
+            document.getElementById('tomorrow-section').style.display = 'none';
+            document.getElementById('booking-details').style.display = 'none';
+            document.getElementById('message-output-section').style.display = 'none'; // 메시지 영역 숨기기
+            document.getElementById('today-list').innerHTML = '';
+            document.getElementById('tomorrow-list').innerHTML = '';
+             if (selectedListItem) {
+                selectedListItem.classList.remove('selected');
+                selectedListItem = null;
+            }
+            currentlyDisplayedBookingIndex = null;
+            currentlyDisplayedListType = null;
+            document.getElementById('copy-feedback-msg').textContent = '';
+        }
+
+        // 예약 결과 화면에 표시
+        function displayResults(data) {
+            const todayList = document.getElementById('today-list');
+            const tomorrowList = document.getElementById('tomorrow-list');
+
+            document.getElementById('selected-date-label').textContent = data.selectedDate;
+            document.getElementById('selected-dow-label').textContent = data.selectedDayOfWeek;
+            document.getElementById('next-date-label').textContent = data.nextDate;
+            document.getElementById('next-dow-label').textContent = data.nextDayOfWeek;
+
+            todayList.innerHTML = '';
+            tomorrowList.innerHTML = '';
+
+            if (data.todayBookings.length === 0) {
+                todayList.innerHTML = '<li>오늘 이용 예약이 없습니다.</li>';
+            } else {
+                data.todayBookings.forEach((booking, index) => {
+                    const li = createBookingListItem(booking, 'today', index);
+                    todayList.appendChild(li);
+                });
+            }
+
+            if (data.tomorrowBookings.length === 0) {
+                tomorrowList.innerHTML = '<li>내일 이용 예약이 없습니다.</li>';
+            } else {
+                data.tomorrowBookings.forEach((booking, index) => {
+                     const li = createBookingListItem(booking, 'tomorrow', index);
+                    tomorrowList.appendChild(li);
+                });
+            }
+
+            document.getElementById('today-section').style.display = 'block';
+            document.getElementById('tomorrow-section').style.display = 'block';
+        }
+
+        // 예약 리스트 아이템(li) 생성 함수
+        function createBookingListItem(booking, listType, index) {
+             const li = document.createElement('li');
+             li.className = 'booking-item';
+             li.textContent = `${booking.startTime || '시간미정'} - ${booking.name}`;
+             li.dataset.listType = listType;
+             li.dataset.rowIndex = booking.rowIndex || index;
+             li.onclick = handleItemClick;
+             return li;
+        }
+
+        // 리스트 아이템 클릭 처리 함수 (토글 기능)
+        function handleItemClick(event) {
+            const clickedLi = event.currentTarget;
+            const listType = clickedLi.dataset.listType;
+            const rowIndex = clickedLi.dataset.rowIndex;
+            let bookingData = null;
+            const sourceList = (listType === 'today') ? currentBookingsData.todayBookings : currentBookingsData.tomorrowBookings;
+            bookingData = sourceList.find(b => b.rowIndex && b.rowIndex.toString() === rowIndex.toString()); // rowIndex 존재 및 비교
+
+            if (!bookingData) {
+                 console.error("클릭된 항목의 예약 데이터를 찾을 수 없습니다.", listType, rowIndex);
+                 return;
+            }
+
+            const isAlreadyDisplayed = (currentlyDisplayedListType === listType && currentlyDisplayedBookingIndex && currentlyDisplayedBookingIndex.toString() === rowIndex.toString());
+            const detailsSection = document.getElementById('booking-details');
+            const messageSection = document.getElementById('message-output-section');
+
+            if (isAlreadyDisplayed && detailsSection.style.display === 'block') {
+                detailsSection.style.display = 'none';
+                messageSection.style.display = 'none';
+                currentlyDisplayedBookingIndex = null;
+                currentlyDisplayedListType = null;
+                if (selectedListItem) { selectedListItem.classList.remove('selected'); selectedListItem = null; }
+                console.log("상세 정보 닫힘:", rowIndex);
+            } else {
+                console.log("상세 정보 열기/업데이트:", rowIndex);
+                if (selectedListItem) { selectedListItem.classList.remove('selected'); }
+                clickedLi.classList.add('selected');
+                selectedListItem = clickedLi;
+                showBookingDetails(bookingData);
+                currentlyDisplayedBookingIndex = bookingData.rowIndex;
+                currentlyDisplayedListType = listType;
+                messageSection.style.display = 'none'; // 새 항목 열 때는 메시지 영역 숨김
+                document.getElementById('copy-feedback-msg').textContent = '';
+            }
+        }
+
+        // 예약 상세 정보 표시 함수 (이용인원 포맷, 버튼 리스너 포함)
+        function showBookingDetails(booking) {
+             console.log("상세 정보 표시 함수 호출됨:", booking);
+            const display = (value) => (value !== null && value !== "" && value !== undefined) ? value : '-';
+
+            // 이용인원 포맷 수정: 숫자 뒤에 "인" 추가
+            const peopleValue = booking.people; // 원본 값 사용
+             const peopleText = (peopleValue !== null && peopleValue !== "" && !isNaN(parseInt(peopleValue)))
+                             ? `${parseInt(peopleValue)}인` // "인" 추가
+                             : '-';
+
+            // 상세 정보 필드 채우기
+            document.getElementById('detail-name').textContent = display(booking.name);
+            document.getElementById('detail-phone').textContent = display(booking.phone);
+            document.getElementById('detail-date').textContent = display(booking.date);
+            document.getElementById('detail-dow').textContent = display(booking.dayOfWeek);
+            document.getElementById('detail-start-time').textContent = display(booking.startTime);
+            document.getElementById('detail-end-time').textContent = display(booking.endTime);
+            document.getElementById('detail-duration').textContent = display(booking.duration);
+            document.getElementById('detail-people').textContent = peopleText; // 수정된 텍스트 적용
+            document.getElementById('detail-purpose').textContent = display(booking.purpose);
+            document.getElementById('detail-amount').textContent = display(booking.amount);
+            document.getElementById('detail-site').textContent = display(booking.site);
+
+            // 버튼 이벤트 리스너 연결
+            const confirmBtn = document.getElementById('btn-confirm-guide');
+            const tomorrowBtn = document.getElementById('btn-tomorrow-guide');
+            const completeBtn = document.getElementById('btn-complete-guide');
+            confirmBtn.onclick = () => handleConfirmGuideClick(booking);
+            tomorrowBtn.onclick = () => handleTomorrowGuideClick(booking);
+            completeBtn.onclick = () => handleCompleteGuideClick(booking);
+            console.log("버튼 이벤트 리스너 연결 완료");
+
+            // 상세 정보 섹션 보이기
+            const detailsSection = document.getElementById('booking-details');
+            detailsSection.style.display = 'block';
+        }
+
+
+        // ========== 버튼 클릭 핸들러 함수들 ==========
+
+        // 예약확정안내 버튼 클릭 핸들러
+        function handleConfirmGuideClick(booking) {
+            console.log("예약확정안내 버튼 클릭:", booking);
+
+            // display 함수를 여기서도 사용
+            const display = (value) => (value !== null && value !== "" && value !== undefined) ? value : '-';
+
+           const displayDate = display(booking.date);
+
+            // 이용인원 포맷 (숫자+'인')
+            const peopleValue = booking.people;
+            const peopleText = (peopleValue !== null && peopleValue !== "" && !isNaN(parseInt(peopleValue)))
+                             ? `${parseInt(peopleValue)}인`
+                             : '-';
+		
+            // *** 총 이용시간 포맷: 상세 정보와 동일하게 'HH:mm 시간' 사용 ***// 
+          const durationText = display(booking.duration);
+
+            // 안내 메시지 템플릿 (Template Literal 사용)
+            const message = `<<예약확정 안내>>
+안녕하세요 ${display(booking.name)}님
+에이트스튜디오 주황 입니다.
+저희 스튜디오를 선택해주셔서 감사합니다
+예약확정 안내 말씀드려요:)
+
+□주소 : 광진구 면목로182, 중앙빌딩 301호
+
+□ 전체대관(A룸&B룸)
+□일시 : ${displayDate} (${display(booking.dayOfWeek)})
+이용시간 : ${display(booking.startTime)} - ${display(booking.endTime)} (${durationText})
+이용인원 : ${peopleText}
+사용목적 : ${display(booking.purpose)}
+
+□ 이용일 1일 전에 출입 관련 안내사항이 발송 될 예정입니다.
+□연락처 : 010.7521.8806
+카카오톡 : @에이트스튜디오주황
+인스타 : @studios_joohwang
+
+□ 기본 이용안내 및 유의사항 : https://vvd.bz/eVQd
+□ 주차 안내 ◆ 1대 무료주차 가능하며, 건물 전용주차장 이용을 부탁드립니다. ◆ 주차장 만차 시 인근 공영주차장 이용 부탁드리며, 비용을 전액(1대) 지원해 드립니다.`;
+
+            // 텍스트 상자에 메시지 넣고 보이게 하기
+            const outputArea = document.getElementById('message-output-area');
+            const outputSection = document.getElementById('message-output-section');
+            outputArea.value = message;
+            outputSection.style.display = 'block';
+            document.getElementById('copy-feedback-msg').textContent = '';
+
+            // 메시지 영역으로 스크롤
+            outputSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // --- 내일이용안내 버튼 클릭 핸들러 (수정: 메시지 생성) ---
+        function handleTomorrowGuideClick(booking) {
+            console.log("내일이용안내 버튼 클릭:", booking);
+
+            // display 함수 사용 (null 또는 빈 값 '-' 처리)
+            const display = (value) => (value !== null && value !== "" && value !== undefined) ? value : '-';
+
+            // 이용일자/요일 (YYYY-MM-DD / 요일) - booking 객체 값 그대로 사용
+            const displayDate = display(booking.date);
+            const displayDow = display(booking.dayOfWeek);
+
+            // 이용인원 포맷 (숫자+'인')
+            const peopleValue = booking.people;
+            const peopleText = (peopleValue !== null && peopleValue !== "" && !isNaN(parseInt(peopleValue)))
+                             ? `${parseInt(peopleValue)}인`
+                             : '-';
+
+             // *** 총 이용시간 포맷 수정: 상세정보와 동일하게 'HH:mm 시간' 사용 ***
+            // 이전의 .replace(' 시간', '') 제거하고 booking.duration 값을 그대로 사용
+            const durationText = display(booking.duration);
+
+            // 안내 메시지 템플릿
+            const message = `<<이용안내>>
+안녕하세요 ${display(booking.name)}님
+에이트스튜디오 주황 입니다.
+내일 이용 안내사항 말씀드려요:)
+
+□주소 : 광진구 면목로182, 중앙빌딩 301호
+□전체대관(A룸&B룸)
+□일시 : ${displayDate} (${displayDow})
+이용시간: ${display(booking.startTime)} - ${display(booking.endTime)} (${durationText})
+이용인원: ${peopleText}
+사용목적: ${display(booking.purpose)}
+
+□ 현관 비밀번호 : 0654*
+□ Wifi 아이디/비밀번호 : Studios_joohwang2.4G / joohwang0321
+□연락처 : 010.7521.8806 카카오톡 : @에이트스튜디오주황 인스타 : @studios_joohwang
+□ 기본 이용안내 및 유의사항 : https://vvd.bz/eVQd
+□스튜디오 전체 금연 구역입니다. 흡연은 1층 외부에서 부탁드립니다.
+□ 주차 안내
+◆ 1대 무료주차 가능하며, 건물 전용주차장 이용을 부탁드립니다.
+◆ 주차장 만차 시 인근 공영주차장 이용 부탁드리며, 비용을 전액(1대) 지원해 드립니다.`;
+
+            // 텍스트 상자에 메시지 넣고 보이게 하기
+            const outputArea = document.getElementById('message-output-area');
+            const outputSection = document.getElementById('message-output-section');
+            outputArea.value = message;
+            outputSection.style.display = 'block'; // 메시지 섹션 보이기
+            document.getElementById('copy-feedback-msg').textContent = ''; // 복사 피드백 초기화
+
+            // 메시지 영역으로 스크롤
+            outputSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+// --- 이용완료안내 버튼 클릭 핸들러 (수정: 메시지 생성) ---
+        function handleCompleteGuideClick(booking) {
+            console.log("이용완료안내 버튼 클릭:", booking); // booking 객체는 로깅용 또는 추후 확장용으로 남겨둘 수 있습니다.
+
+            // 안내 메시지 (고정 텍스트)
+            // Template Literal(백틱 `)을 사용하여 줄바꿈 포함
+            const message = `안녕하세요 에이트스튜디오 주황 입니다.
+
+금일 이용은 잘 하셨는지요:)
+다음에도 좋은 촬영 되실 수 있는 공간으로
+거듭나도록 노력하겠습니다.
+
+저희 스튜디오를 방문해주셔서 다시 한 번 감사드리고, 남은 하루 행복한 시간되세요:)❤`;
+
+            // 텍스트 상자에 메시지 넣고 보이게 하기
+            const outputArea = document.getElementById('message-output-area');
+            const outputSection = document.getElementById('message-output-section');
+            outputArea.value = message; // 고정 메시지 설정
+            outputSection.style.display = 'block'; // 메시지 섹션 보이기
+            document.getElementById('copy-feedback-msg').textContent = ''; // 복사 피드백 초기화
+
+            // 메시지 영역으로 스크롤
+            outputSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // 생성된 안내문 복사 함수
+        function copyGeneratedMessage() {
+            const messageText = document.getElementById('message-output-area').value;
+            const feedback = document.getElementById('copy-feedback-msg');
+            feedback.textContent = '';
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(messageText)
+                    .then(() => {
+                        console.log('안내문 복사 성공!');
+                        feedback.textContent = '✅ 복사 완료!';
+                        setTimeout(() => { feedback.textContent = ''; }, 2000);
+                    })
+                    .catch(err => {
+                        console.error('클립보드 복사 실패:', err);
+                        feedback.textContent = '❌ 복사 실패';
+                    });
+            } else {
+                console.warn('navigator.clipboard API를 사용할 수 없습니다.');
+                feedback.textContent = '❌ 복사 기능 미지원';
+            }
+        }
+
+    </script>
+
+
+</body>
+</html>
