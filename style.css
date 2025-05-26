@@ -41,30 +41,49 @@ button:hover { background-color: #fb8c00; }
 ul { list-style: none; padding-left: 0; }
 /* === 예약 항목 스타일 (flex 적용) === */
 li.booking-item {
-    border: 1px solid #eee; padding: 12px 18px; margin-bottom: 8px; cursor: pointer;
-    background-color: #fff; transition: background-color 0.2s, border-left-color 0.2s;
-    border-radius: 4px; border-left: 3px solid transparent;
-    display: flex; /* Flexbox 적용 */
-    justify-content: space-between; /* 내용과 버튼 양쪽 정렬 */
-    align-items: center; /* 세로 중앙 정렬 */
+    border: 1px solid #eee;
+    padding: 10px 15px;       /* 기본 패딩, 오른쪽 패딩은 버튼 고려하여 충분히 */
+    padding-right: 50px;      /* 삭제 버튼 공간 확보 (버튼 너비 + 여백 고려) */
+    margin-bottom: 8px;
+    cursor: pointer;
+    background-color: #fff;
+    transition: background-color 0.2s, border-left-color 0.2s;
+    border-radius: 4px;
+    border-left: 3px solid transparent;
+    position: relative;      /* 자식 요소의 absolute 위치 기준점 */
+    /* display: flex; 와 align-items: center; 는 내부 textSpan 정렬에 여전히 유용할 수 있습니다. */
+    /* 만약 textSpan이 항상 한 줄이라면 flex는 필요 없을 수도 있습니다. */
+    display: flex;
+    align-items: center; 
 }
-.booking-item-text { /* 예약 내용 텍스트 영역 */
-    flex-grow: 1; /* 남는 공간 차지 */
+.booking-item-text {
+    flex-grow: 1; /* 버튼이 absolute가 아니었을 때 남은 공간 차지 */
+    /* position: absolute 사용 시 flex-grow는 직접적인 영향 없음 */
+    /* 버튼이 겹치지 않도록, padding-right이 li에 적용되어 있으므로 별도 margin은 필요 없을 수 있음 */
+    /* 또는, textSpan이 버튼 영역을 침범하지 않도록 width 제한을 줄 수도 있습니다. */
 }
 li.booking-item:hover { background-color: #fff3e0; }
 li.booking-item.selected { background-color: #fff3e0; border-left: 3px solid #ff9800; font-weight: bold;}
 
-/* === 삭제 버튼 스타일 === */
+
+/* === 삭제 버튼 스타일 (크기 및 위치 수정) === */
 .delete-item-btn {
-    background-color: #e74c3c; /* 빨간색 계열 */
+    background-color: #e74c3c;
     color: white;
-    padding: 3px 7px;
-    font-size: 0.7em;
+    /* ▼▼▼ 크기 더 작게 조절 ▼▼▼ */
+    padding: 2px 6px;   /* 패딩 대폭 축소 */
+    font-size: 0.65em;  /* 폰트 크기 대폭 축소 */
+    /* ▲▲▲ 크기 조절 ▲▲▲ */
     border-radius: 3px;
     border: none;
     cursor: pointer;
-    margin-left: 10px; /* 내용과의 간격 */
-    flex-shrink: 0; /* 버튼 크기 줄어들지 않게 */
+    /* ▼▼▼ 위치 조절 (absolute) ▼▼▼ */
+    position: absolute;     /* 부모(li.booking-item) 기준 절대 위치 */
+    right: 10px;            /* li의 오른쪽 가장자리에서 10px 안쪽 */
+    top: 50%;               /* li의 세로 중앙 */
+    transform: translateY(-50%); /* 세로 중앙 정렬 보정 */
+    /* ▲▲▲ 위치 조절 ▲▲▲ */
+    /* margin-left 와 flex-shrink 는 absolute 위치 지정 시 필요 없습니다. */
 }
 .delete-item-btn:hover {
     background-color: #c0392b;
@@ -140,8 +159,16 @@ li.booking-item.selected { background-color: #fff3e0; border-left: 3px solid #ff
 
      .date-picker-section input[type="date"] { min-width: 120px; }
 
-     li.booking-item { padding: 10px 12px; }
-     .delete-item-btn { padding: 2px 5px; font-size: 0.65em; margin-left: 8px; }
+    li.booking-item {
+        padding: 8px 10px;
+        padding-right: 45px; /* 모바일에서 버튼 공간 확보 */
+    }
+
+    .delete-item-btn {
+        padding: 2px 5px;     /* 모바일에서 패딩 유지 또는 약간 더 조정 */
+        font-size: 0.6em;   /* 모바일에서 폰트 더 작게 */
+        right: 8px;           /* 모바일에서 오른쪽 여백 조정 */
+    }
 
 
      #booking-details { padding: 15px; }
