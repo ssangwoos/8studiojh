@@ -58,12 +58,12 @@ li.booking-item.selected { background-color: #fff3e0; border-left: 3px solid #ff
 .delete-item-btn {
     background-color: #e74c3c; /* 빨간색 계열 */
     color: white;
-    padding: 5px 10px;
-    font-size: 0.8em;
+    padding: 3px 7px;
+    font-size: 0.7em;
     border-radius: 3px;
     border: none;
     cursor: pointer;
-    margin-left: 15px; /* 내용과의 간격 */
+    margin-left: 10px; /* 내용과의 간격 */
     flex-shrink: 0; /* 버튼 크기 줄어들지 않게 */
 }
 .delete-item-btn:hover {
@@ -141,7 +141,7 @@ li.booking-item.selected { background-color: #fff3e0; border-left: 3px solid #ff
      .date-picker-section input[type="date"] { min-width: 120px; }
 
      li.booking-item { padding: 10px 12px; }
-     .delete-item-btn { padding: 4px 8px; font-size: 0.75em; margin-left: 10px; }
+     .delete-item-btn { padding: 2px 5px; font-size: 0.65em; margin-left: 8px; }
 
 
      #booking-details { padding: 15px; }
