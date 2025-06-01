@@ -361,34 +361,54 @@
                 const site = document.getElementById('modal-site').value;
 
                 bookingData = {
-                    name: document.getElementById('modal-name').value.trim(), phone: document.getElementById('modal-phone').value.trim(),
-                    date: document.getElementById('modal-date').value, startTime: startTime, endTime: endTime,
-                    people: document.getElementById('modal-people').value, purpose: document.getElementById('modal-purpose').value.trim(),
-                    amount: document.getElementById('modal-amount').value, site: site
+                    action: 'addBooking', // ★★★★★ 작업(action)을 여기에 명시적으로 추가 ★★★★★
+                    name: document.getElementById('modal-name').value.trim(),
+                    phone: document.getElementById('modal-phone').value.trim(),
+                    date: document.getElementById('modal-date').value,
+                    startTime: startTime,
+                    endTime: endTime,
+                    people: document.getElementById('modal-people').value,
+                    purpose: document.getElementById('modal-purpose').value.trim(),
+                    amount: document.getElementById('modal-amount').value,
+                    site: site
                 };
+                console.log("전송할 데이터:", bookingData);
                 if (!bookingData.name || !bookingData.phone || !bookingData.date || !bookingData.startTime || !bookingData.endTime || !bookingData.people) {
                     alert('필수 입력 항목(이름, 연락처, 날짜, 시간, 인원)을 모두 채워주세요.'); return;
                 }
                  if (endTime !== "00:00" && `${bookingData.date} ${endTime}` <= `${bookingData.date} ${startTime}`) {
-                    if (!(endTime === "24:00" && startTime !== "24:00")) { // 24:00 종료는 허용 (다음날 00시)
+                    if (!(endTime === "24:00" && startTime !== "24:00")) {
                         alert('종료 시간은 시작 시간보다 빠를 수 없습니다.\n(자정 넘어가는 예약은 종료시간 24:00 또는 다음날 00:00 사용)'); return;
                     }
                  }
-            } catch(formError) { console.error("폼 데이터 수집 오류:", formError); alert("폼 데이터를 읽는 중 오류가 발생했습니다."); return; }
+            } catch(formError) {
+                console.error("폼 데이터 수집 오류:", formError);
+                alert("폼 데이터를 읽는 중 오류가 발생했습니다.");
+                return;
+            }
 
             showLoading(true);
             try {
-                const response = await fetch(`${WEB_APP_URL}?action=addBooking`, {
-                    method: 'POST', cache: 'no-cache', body: JSON.stringify(bookingData), headers: {'Content-Type': 'text/plain;charset=utf-8'}
+                // ★★★★★ URL에서 ?action=addBooking 제거 ★★★★★
+                console.log(`Apps Script POST 호출: ${WEB_APP_URL}`);
+                const response = await fetch(WEB_APP_URL, { // URL에서 쿼리 파라미터 제거
+                    method: 'POST',
+                    cache: 'no-cache',
+                    body: JSON.stringify(bookingData), // 'action'이 포함된 bookingData 전송
+                    headers: {'Content-Type': 'text/plain;charset=utf-8'}
                 });
+                console.log("Apps Script POST 응답 상태:", response.status);
                 if (!response.ok) { throw await generateErrorFromResponse(response, '등록'); }
                 const result = await response.json();
+                console.log("Apps Script 등록 결과:", result);
                 if (result.status === 'success') {
                     alert(result.message || '예약이 성공적으로 등록되었습니다!');
-                    closeBookingModal(); fetchBookings();
+                    closeBookingModal();
+                    fetchBookings(); // 목록 새로고침
                 } else { throw new Error(result.message || '등록 실패 (서버)'); }
             } catch (error) {
-                console.error('예약 등록 실패:', error); alert(`예약 등록 중 오류:\n${error.message}`);
+                console.error('예약 등록 실패:', error);
+                alert(`예약 등록 중 오류:\n${error.message}`);
             } finally {
                 showLoading(false);
             }
