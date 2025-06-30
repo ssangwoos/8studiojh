@@ -93,12 +93,13 @@
     </div>
 
     <script>
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxR_c6yX2cUp9TZ5Xr4b0w6-h-JQh1VJwhyskqlVs8FW1Zpcc4T5QEKKFBazaNMMPrkSA/exec';
+        const WEB_APP_URL = 'const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxR_c6yX2cUp9TZ5Xr4b0w6-h-JQh1VJwhyskqlVs8FW1Zpcc4T5QEKKFBazaNMMPrkSA/exec';';
 
         let currentBookingsData = {};
         let selectedListItem = null;
         let currentlyDisplayedBookingIndex = null;
         let currentlyDisplayedListType = null;
+        let isFetching = false; // ★★★ 조회 로딩 중 상태를 기억할 변수 추가 ★★★
 
         document.addEventListener('DOMContentLoaded', () => {
             try {
@@ -115,11 +116,54 @@
                 document.getElementById('copy-message-button').addEventListener('click', copyGeneratedMessage);
 
                 document.getElementById('booking-form').addEventListener('submit', (event) => {
-                    event.preventDefault(); masterSubmitHandler();
+                    event.preventDefault();
+                    masterSubmitHandler();
                 });
                 console.log("페이지 로드 및 모든 리스너 설정 완료");
             } catch (error) { console.error("페이지 초기화 중 오류:", error); }
         });
+
+        // --- 예약 정보 가져오기 함수 (수정: 중복 호출 방지 로직 추가) ---
+        async function fetchBookings() {
+            // ★★★ 이미 조회 중이면 함수를 즉시 종료 ★★★
+            if (isFetching) {
+                console.log("이미 데이터를 불러오는 중입니다. 잠시만 기다려주세요.");
+                return;
+            }
+
+            console.log("'조회' 버튼 클릭됨");
+            const selectedDate = document.getElementById('date-picker').value;
+            if (!selectedDate) { alert('날짜를 선택해주세요.'); return; }
+
+            const fetchBtn = document.getElementById('fetch-btn');
+
+            try {
+                isFetching = true;          // ★★★ 로딩 상태 시작 ★★★
+                fetchBtn.disabled = true;   // ★★★ 버튼 비활성화 ★★★
+                fetchBtn.textContent = '조회 중...'; // 버튼 텍스트 변경
+                showLoading(true);
+                hideResultsAndDetails();
+                
+                const response = await fetch(`${WEB_APP_URL}?date=${selectedDate}`);
+                if (!response.ok) { throw await generateErrorFromResponse(response, '조회'); }
+                const data = await response.json();
+                if (data.status === 'error') { throw new Error(`서버 오류: ${data.message}`); }
+                currentBookingsData = data;
+                displayResults(data);
+                if (data.processingErrors && data.processingErrors.length > 0) {
+                    const errorDisplay = document.getElementById('error-display');
+                    errorDisplay.innerHTML = '<h3>⚠️ 데이터 처리 중 일부 오류 발생</h3><p>아래 행의 데이터에 문제가 있을 수 있습니다. 확인 후 수정해주세요.</p><ul>' + data.processingErrors.map(err => `<li>${err}</li>`).join('') + '</ul>';
+                    errorDisplay.style.display = 'block';
+                }
+            } catch (error) {
+                alert(`예약 정보 조회 오류:\n${error.message}`);
+            } finally {
+                isFetching = false;         // ★★★ 로딩 상태 종료 ★★★
+                fetchBtn.disabled = false;  // ★★★ 버튼 다시 활성화 ★★★
+                fetchBtn.textContent = '조회'; // 버튼 텍스트 원상복구
+                showLoading(false);
+            }
+        }
 
         function populateHourSelect(selectId) {
             const selectElement = document.getElementById(selectId);
