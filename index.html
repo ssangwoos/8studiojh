@@ -10,7 +10,6 @@
     <div id="add-booking-btn-container">
         <button id="add-booking-btn">➕ 예약등록</button>
     </div>
-
     <div class="container">
         <h1>🍊 에이트스튜디오주황 예약 현황 🍊</h1>
         <div class="section date-picker-section">
@@ -53,10 +52,9 @@
             </div>
         </div>
     </div>
-
     <div id="booking-modal-overlay" class="modal-overlay">
         <div class="modal-content">
-            <h3>📝 신규 예약 등록</h3>
+            <h3 id="modal-title">📝 신규 예약 등록</h3>
             <form id="booking-form">
                 <div class="form-group"><label for="modal-name">예약자명:</label><input type="text" id="modal-name" required></div>
                 <div class="form-group"><label for="modal-phone">연락처:</label><input type="tel" id="modal-phone" placeholder="010-xxxx-xxxx" required></div>
@@ -86,7 +84,7 @@
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="cancel-btn" id="modal-cancel-btn">취소</button>
-                    <button type="submit">등록</button>
+                    <button type="submit" id="modal-submit-btn">등록</button>
                 </div>
             </form>
         </div>
@@ -108,18 +106,20 @@
                 document.getElementById('date-picker').value = formatDateForInput(today);
                 populateHourSelect('modal-start-hour');
                 populateHourSelect('modal-end-hour');
+                
                 document.getElementById('fetch-btn').addEventListener('click', fetchBookings);
                 document.getElementById('add-booking-btn').addEventListener('click', openBookingModal);
                 document.getElementById('booking-form').addEventListener('submit', handleBookingSubmit);
                 document.getElementById('modal-cancel-btn').addEventListener('click', closeBookingModal);
                 document.getElementById('copy-message-button').addEventListener('click', copyGeneratedMessage);
-            } catch (error) { console.error("페이지 초기화 중 오류:", error); }
+            } catch (error) {
+                console.error("페이지 초기화 중 오류:", error);
+            }
         });
 
         function populateHourSelect(selectId) {
             const selectElement = document.getElementById(selectId);
             if (!selectElement) return;
-            selectElement.innerHTML = '';
             for (let i = 0; i <= 24; i++) {
                 const hour = i.toString().padStart(2, '0');
                 const option = new Option(hour, hour);
@@ -128,11 +128,18 @@
         }
 
         function formatDateForInput(date) {
-            try { const yyyy = date.getFullYear(); const mm = String(date.getMonth() + 1).padStart(2, '0'); const dd = String(date.getDate()).padStart(2, '0'); return `${yyyy}-${mm}-${dd}`; } catch(e) { return ""; }
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
         }
-        
+
         const display = (value) => (value !== null && value !== "" && value !== undefined) ? value : '-';
-        function formatNumberWithCommas(number) { return (number === null || number === undefined || number === '' || isNaN(Number(number))) ? '-' : Number(number).toLocaleString('ko-KR'); }
+
+        function formatNumberWithCommas(number) {
+            if (number === null || number === undefined || number === '' || isNaN(Number(number))) { return '-'; }
+            return Number(number).toLocaleString('ko-KR');
+        }
 
         async function fetchBookings() {
             if (isFetching) { return; }
@@ -140,97 +147,200 @@
             if (!selectedDate) { alert('날짜를 선택해주세요.'); return; }
             const fetchBtn = document.getElementById('fetch-btn');
             try {
-                isFetching = true; fetchBtn.disabled = true; fetchBtn.textContent = '조회 중...';
-                showLoading(true); hideResultsAndDetails();
+                isFetching = true;
+                fetchBtn.disabled = true;
+                fetchBtn.textContent = '조회 중...';
+                showLoading(true);
+                hideResultsAndDetails();
                 const response = await fetch(`${WEB_APP_URL}?date=${selectedDate}`);
                 if (!response.ok) { throw await generateErrorFromResponse(response, '조회'); }
                 const data = await response.json();
                 if (data.status === 'error') { throw new Error(data.message); }
-                currentBookingsData = data; displayResults(data);
-                if (data.processingErrors && data.processingErrors.length > 0) {
-                    const errorDisplay = document.getElementById('error-display');
-                    errorDisplay.innerHTML = '<h3>⚠️ 데이터 처리 중 일부 오류 발생</h3><ul>' + data.processingErrors.map(err => `<li>${err}</li>`).join('') + '</ul>';
-                    errorDisplay.style.display = 'block';
-                }
-            } catch (error) { alert(`예약 정보 조회 오류:\n${error.message}`);
-            } finally { isFetching = false; fetchBtn.disabled = false; fetchBtn.textContent = '조회'; showLoading(false); }
+                currentBookingsData = data;
+                displayResults(data);
+            } catch (error) {
+                alert(`예약 정보 조회 오류:\n${error.message}`);
+            } finally {
+                isFetching = false;
+                fetchBtn.disabled = false;
+                fetchBtn.textContent = '조회';
+                showLoading(false);
+            }
         }
 
-        function showLoading(isLoading) { document.getElementById('loading').style.display = isLoading ? 'block' : 'none'; }
+        function showLoading(isLoading) {
+            document.getElementById('loading').style.display = isLoading ? 'block' : 'none';
+        }
+
         function hideResultsAndDetails() {
-            document.getElementById('today-section').style.display = 'none'; document.getElementById('tomorrow-section').style.display = 'none';
-            document.getElementById('booking-details').style.display = 'none'; document.getElementById('message-output-section').style.display = 'none';
+            document.getElementById('today-section').style.display = 'none';
+            document.getElementById('tomorrow-section').style.display = 'none';
+            document.getElementById('booking-details').style.display = 'none';
+            document.getElementById('message-output-section').style.display = 'none';
             document.getElementById('error-display').style.display = 'none';
-            document.getElementById('today-list').innerHTML = ''; document.getElementById('tomorrow-list').innerHTML = '';
-            if (selectedListItem) { selectedListItem.classList.remove('selected'); selectedListItem = null; }
-            currentlyDisplayedBookingIndex = null; currentlyDisplayedListType = null;
+            document.getElementById('today-list').innerHTML = '';
+            document.getElementById('tomorrow-list').innerHTML = '';
+            if (selectedListItem) {
+                selectedListItem.classList.remove('selected');
+                selectedListItem = null;
+            }
+            currentlyDisplayedBookingIndex = null;
+            currentlyDisplayedListType = null;
         }
 
         function displayResults(data) {
-            const todayList = document.getElementById('today-list'); const tomorrowList = document.getElementById('tomorrow-list');
-            document.getElementById('selected-date-label').textContent = data.selectedDate; document.getElementById('selected-dow-label').textContent = data.selectedDayOfWeek;
-            document.getElementById('next-date-label').textContent = data.nextDate; document.getElementById('next-dow-label').textContent = data.nextDayOfWeek;
-            todayList.innerHTML = ''; tomorrowList.innerHTML = '';
-            if (!data.todayBookings || data.todayBookings.length === 0) { todayList.innerHTML = '<li>오늘 이용 예약이 없습니다.</li>'; }
-            else { data.todayBookings.forEach(b => todayList.appendChild(createBookingListItem(b, 'today'))); }
-            if (!data.tomorrowBookings || data.tomorrowBookings.length === 0) { tomorrowList.innerHTML = '<li>내일 이용 예약이 없습니다.</li>'; }
-            else { data.tomorrowBookings.forEach(b => tomorrowList.appendChild(createBookingListItem(b, 'tomorrow'))); }
-            document.getElementById('today-section').style.display = 'block'; document.getElementById('tomorrow-section').style.display = 'block';
+            const todayList = document.getElementById('today-list');
+            const tomorrowList = document.getElementById('tomorrow-list');
+            document.getElementById('selected-date-label').textContent = data.selectedDate;
+            document.getElementById('selected-dow-label').textContent = data.selectedDayOfWeek;
+            document.getElementById('next-date-label').textContent = data.nextDate;
+            document.getElementById('next-dow-label').textContent = data.nextDayOfWeek;
+            todayList.innerHTML = '';
+            tomorrowList.innerHTML = '';
+            if (!data.todayBookings || data.todayBookings.length === 0) {
+                todayList.innerHTML = '<li>오늘 이용 예약이 없습니다.</li>';
+            } else {
+                data.todayBookings.forEach(b => todayList.appendChild(createBookingListItem(b, 'today')));
+            }
+            if (!data.tomorrowBookings || data.tomorrowBookings.length === 0) {
+                tomorrowList.innerHTML = '<li>내일 이용 예약이 없습니다.</li>';
+            } else {
+                data.tomorrowBookings.forEach(b => tomorrowList.appendChild(createBookingListItem(b, 'tomorrow')));
+            }
+            document.getElementById('today-section').style.display = 'block';
+            document.getElementById('tomorrow-section').style.display = 'block';
         }
 
         function createBookingListItem(booking, listType) {
-             const li = document.createElement('li'); li.className = 'booking-item';
-             const textSpan = document.createElement('span'); textSpan.className = 'booking-item-text'; textSpan.textContent = `${booking.startTime || '시간미정'} - ${booking.name || '이름없음'}`; li.appendChild(textSpan);
-             const deleteBtn = document.createElement('button'); deleteBtn.textContent = '삭제'; deleteBtn.className = 'delete-item-btn';
-             deleteBtn.onclick = (event) => { event.stopPropagation(); handleDeleteBookingClick(booking.rowIndex, booking.name, li); };
-             li.appendChild(deleteBtn);
-             li.dataset.listType = listType; li.dataset.rowIndex = booking.rowIndex; li.onclick = handleItemClick;
-             return li;
+            const li = document.createElement('li');
+            li.className = 'booking-item';
+            const textSpan = document.createElement('span');
+            textSpan.className = 'booking-item-text';
+            textSpan.textContent = `${booking.startTime || '시간미정'} - ${booking.name || '이름없음'}`;
+            li.appendChild(textSpan);
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = '삭제';
+            deleteBtn.className = 'delete-item-btn';
+            deleteBtn.onclick = (event) => {
+                event.stopPropagation();
+                handleDeleteBookingClick(booking.rowIndex, booking.name, li);
+            };
+            li.appendChild(deleteBtn);
+            li.dataset.listType = listType;
+            li.dataset.rowIndex = booking.rowIndex;
+            li.onclick = handleItemClick;
+            return li;
         }
 
         function handleItemClick(event) {
-            const clickedLi = event.currentTarget; const listType = clickedLi.dataset.listType; const rowIndex = clickedLi.dataset.rowIndex;
-            const sourceList = (listType === 'today') ? currentBookingsData.todayBookings : currentBookingsData.tomorrowBookings; if (!sourceList) return;
-            const bookingData = sourceList.find(b => b.rowIndex && b.rowIndex.toString() === rowIndex.toString()); if (!bookingData) return;
+            const clickedLi = event.currentTarget;
+            const listType = clickedLi.dataset.listType;
+            const rowIndex = clickedLi.dataset.rowIndex;
+            const sourceList = (listType === 'today') ? currentBookingsData.todayBookings : currentBookingsData.tomorrowBookings;
+            if (!sourceList) return;
+            const bookingData = sourceList.find(b => b.rowIndex && b.rowIndex.toString() === rowIndex.toString());
+            if (!bookingData) return;
             const isAlreadyDisplayed = (currentlyDisplayedListType === listType && currentlyDisplayedBookingIndex && currentlyDisplayedBookingIndex.toString() === rowIndex.toString());
-            const detailsSection = document.getElementById('booking-details'); const messageSection = document.getElementById('message-output-section');
+            const detailsSection = document.getElementById('booking-details');
+            const messageSection = document.getElementById('message-output-section');
             if (isAlreadyDisplayed) {
-                detailsSection.style.display = 'none'; messageSection.style.display = 'none'; currentlyDisplayedBookingIndex = null;
-                if (selectedListItem) { selectedListItem.classList.remove('selected'); selectedListItem = null; }
+                detailsSection.style.display = 'none';
+                messageSection.style.display = 'none';
+                currentlyDisplayedBookingIndex = null;
+                if (selectedListItem) {
+                    selectedListItem.classList.remove('selected');
+                    selectedListItem = null;
+                }
             } else {
-                if (selectedListItem) { selectedListItem.classList.remove('selected'); }
-                clickedLi.classList.add('selected'); selectedListItem = clickedLi; showBookingDetails(bookingData);
-                currentlyDisplayedBookingIndex = bookingData.rowIndex; currentlyDisplayedListType = listType; messageSection.style.display = 'none';
+                if (selectedListItem) {
+                    selectedListItem.classList.remove('selected');
+                }
+                clickedLi.classList.add('selected');
+                selectedListItem = clickedLi;
+                showBookingDetails(bookingData);
+                currentlyDisplayedBookingIndex = bookingData.rowIndex;
+                currentlyDisplayedListType = listType;
+                messageSection.style.display = 'none';
             }
         }
 
         function showBookingDetails(booking) {
-             const pVal = booking.people; const pTxt = (pVal !== null && !isNaN(parseInt(pVal))) ? `${parseInt(pVal)}인` : '-';
-             document.getElementById('detail-name').textContent = display(booking.name); document.getElementById('detail-phone').textContent = display(booking.phone); document.getElementById('detail-date').textContent = display(booking.date);
-             document.getElementById('detail-dow').textContent = display(booking.dayOfWeek); document.getElementById('detail-start-time').textContent = display(booking.startTime); document.getElementById('detail-end-time').textContent = display(booking.endTime);
-             document.getElementById('detail-duration').textContent = display(booking.duration); document.getElementById('detail-people').textContent = pTxt; document.getElementById('detail-purpose').textContent = display(booking.purpose);
-             document.getElementById('detail-amount').textContent = formatNumberWithCommas(booking.amount); document.getElementById('detail-site').textContent = display(booking.site);
-             document.getElementById('btn-confirm-guide').onclick = () => handleConfirmGuideClick(booking);
-             document.getElementById('btn-tomorrow-guide').onclick = () => handleTomorrowGuideClick(booking);
-             document.getElementById('btn-complete-guide').onclick = () => handleCompleteGuideClick(booking);
-             document.getElementById('booking-details').style.display = 'block';
+            const pVal = booking.people;
+            const pTxt = (pVal !== null && pVal !== "" && !isNaN(parseInt(pVal))) ? `${parseInt(pVal)}인` : '-';
+            document.getElementById('detail-name').textContent = display(booking.name);
+            document.getElementById('detail-phone').textContent = display(booking.phone);
+            document.getElementById('detail-date').textContent = display(booking.date);
+            document.getElementById('detail-dow').textContent = display(booking.dayOfWeek);
+            document.getElementById('detail-start-time').textContent = display(booking.startTime);
+            document.getElementById('detail-end-time').textContent = display(booking.endTime);
+            document.getElementById('detail-duration').textContent = display(booking.duration);
+            document.getElementById('detail-people').textContent = pTxt;
+            document.getElementById('detail-purpose').textContent = display(booking.purpose);
+            document.getElementById('detail-amount').textContent = formatNumberWithCommas(booking.amount);
+            document.getElementById('detail-site').textContent = display(booking.site);
+            document.getElementById('btn-confirm-guide').onclick = () => handleConfirmGuideClick(booking);
+            document.getElementById('btn-tomorrow-guide').onclick = () => handleTomorrowGuideClick(booking);
+            document.getElementById('btn-complete-guide').onclick = () => handleCompleteGuideClick(booking);
+            document.getElementById('booking-details').style.display = 'block';
         }
-        
+
+        function openBookingModal() {
+            const form = document.getElementById('booking-form');
+            form.reset();
+            document.getElementById('modal-date').value = document.getElementById('date-picker').value || formatDateForInput(new Date());
+            document.getElementById('booking-modal-overlay').style.display = 'flex';
+        }
+
+        function closeBookingModal() {
+            document.getElementById('booking-modal-overlay').style.display = 'none';
+        }
+
         async function handleBookingSubmit(event) {
             event.preventDefault();
             let bookingData;
             try {
-                bookingData = { action: 'addBooking', name: document.getElementById('modal-name').value.trim(), phone: document.getElementById('modal-phone').value.trim(), date: document.getElementById('modal-date').value, startTime: `${document.getElementById('modal-start-hour').value}:${document.getElementById('modal-start-minute').value}`, endTime: `${document.getElementById('modal-end-hour').value}:${document.getElementById('modal-end-minute').value}`, people: document.getElementById('modal-people').value, purpose: document.getElementById('modal-purpose').value.trim(), amount: document.getElementById('modal-amount').value, site: document.getElementById('modal-site').value };
-                if (!bookingData.name || !bookingData.phone || !bookingData.date) { alert('이름, 연락처, 이용일은 필수입니다.'); return; }
-            } catch(formError) { alert("폼 데이터를 읽는 중 오류가 발생했습니다."); return; }
+                bookingData = {
+                    action: 'addBooking',
+                    name: document.getElementById('modal-name').value.trim(),
+                    phone: document.getElementById('modal-phone').value.trim(),
+                    date: document.getElementById('modal-date').value,
+                    startTime: `${document.getElementById('modal-start-hour').value}:${document.getElementById('modal-start-minute').value}`,
+                    endTime: `${document.getElementById('modal-end-hour').value}:${document.getElementById('modal-end-minute').value}`,
+                    people: document.getElementById('modal-people').value,
+                    purpose: document.getElementById('modal-purpose').value.trim(),
+                    amount: document.getElementById('modal-amount').value,
+                    site: document.getElementById('modal-site').value
+                };
+                if (!bookingData.name || !bookingData.phone || !bookingData.date) {
+                    alert('이름, 연락처, 이용일은 필수입니다.');
+                    return;
+                }
+            } catch (formError) {
+                alert("폼 데이터를 읽는 중 오류가 발생했습니다.");
+                return;
+            }
             showLoading(true);
             try {
-                const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(bookingData) });
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(bookingData)
+                });
                 if (!response.ok) { throw await generateErrorFromResponse(response, '등록'); }
-                const result = await response.json(); if (result.status === 'success') { alert(result.message || '예약이 성공적으로 등록되었습니다!'); closeBookingModal(); fetchBookings(); } else { throw new Error(result.message || '등록 실패 (서버)'); }
-            } catch (error) { alert(`예약 등록 중 오류:\n${error.message}`); } finally { showLoading(false); }
+                const result = await response.json();
+                if (result.status === 'success') {
+                    alert(result.message || '예약이 성공적으로 등록되었습니다!');
+                    closeBookingModal();
+                    fetchBookings();
+                } else {
+                    throw new Error(result.message || '등록 실패 (서버)');
+                }
+            } catch (error) {
+                alert(`예약 등록 중 오류:\n${error.message}`);
+            } finally {
+                showLoading(false);
+            }
         }
-        
+
         async function handleDeleteBookingClick(rowIndex, bookingName, listItemElement) {
             if (!confirm(`"${bookingName}"님의 예약을 정말 삭제하시겠습니까?\n(시트와 연결된 캘린더 일정이 함께 삭제됩니다.)`)) { return; }
             showLoading(true);
@@ -240,21 +350,60 @@
                 if (!response.ok) { throw await generateErrorFromResponse(response, '삭제'); }
                 const result = await response.json();
                 if (result.status === 'success') {
-                    alert(result.message || '예약이 성공적으로 삭제되었습니다.'); listItemElement.remove();
-                    if (currentlyDisplayedBookingIndex && currentlyDisplayedBookingIndex.toString() === rowIndex.toString()) { document.getElementById('booking-details').style.display = 'none'; document.getElementById('message-output-section').style.display = 'none'; currentlyDisplayedBookingIndex = null; }
+                    alert(result.message || '예약이 성공적으로 삭제되었습니다.');
+                    listItemElement.remove();
+                    if (currentlyDisplayedBookingIndex && currentlyDisplayedBookingIndex.toString() === rowIndex.toString()) {
+                        document.getElementById('booking-details').style.display = 'none';
+                        document.getElementById('message-output-section').style.display = 'none';
+                        currentlyDisplayedBookingIndex = null;
+                    }
                 } else { throw new Error(result.message || '삭제 실패 (서버)'); }
             } catch (error) {
-                let errorMessage = (error && error.message) ? error.message : "알 수 없는 오류가 발생했습니다."; alert(`예약 삭제 중 오류가 발생했습니다:\n${errorMessage}`);
-            } finally { showLoading(false); }
+                let errorMessage = (error && error.message) ? error.message : "알 수 없는 오류가 발생했습니다.";
+                alert(`예약 삭제 중 오류가 발생했습니다:\n${errorMessage}`);
+            } finally {
+                showLoading(false);
+            }
         }
 
-        function handleConfirmGuideClick(booking) { const pTxt = `${display(booking.people)}인`; const message = `<<예약확정 안내>>\n안녕하세요 ${display(booking.name)}님\n에이트스튜디오 주황 입니다.\n저희 스튜디오를 선택해주셔서 감사합니다\n예약확정 안내 말씀드려요:)\n\n□주소 : 광진구 면목로182, 중앙빌딩 301호\n\n□ 전체대관(A룸&B룸)\n□일시 : ${display(booking.date)} (${display(booking.dayOfWeek)})\n이용시간 : ${display(booking.startTime)} - ${display(booking.endTime)} (${display(booking.duration)})\n이용인원 : ${pTxt}\n사용목적 : ${display(booking.purpose)}\n\n□ 이용일 1일 전에 출입 관련 안내사항이 발송 될 예정입니다.\n□연락처 : 010.7521.8806\n카카오톡 : @에이트스튜디오주황\n인스타 : @studios_joohwang\n\n□ 기본 이용안내 및 유의사항 : https://vvd.bz/eVQd\n□ 주차 안내 ◆ 1대 무료주차 가능하며, 건물 전용주차장 이용을 부탁드립니다. ◆ 주차장 만차 시 인근 공영주차장 이용 부탁드리며, 비용을 전액(1대) 지원해 드립니다.`; displayGeneratedMessage(message); }
-        function handleTomorrowGuideClick(booking) { const pTxt = `${display(booking.people)}인`; const message = `<<이용안내>>\n안녕하세요 ${display(booking.name)}님\n에이트스튜디오 주황 입니다.\n내일 이용 안내사항 말씀드려요:)\n\n□주소 : 광진구 면목로182, 중앙빌딩 301호\n□전체대관(A룸&B룸)\n□일시 : ${display(booking.date)} (${display(booking.dayOfWeek)})\n이용시간: ${display(booking.startTime)} - ${display(booking.endTime)} (${display(booking.duration)})\n이용인원: ${pTxt}\n사용목적 : ${display(booking.purpose)}\n\n□ 현관 비밀번호 : 0654*\n□ Wifi 아이디/비밀번호 : Studios_joohwang2.4G / joohwang0321\n□연락처 : 010.7521.8806 카카오톡 : @에이트스튜디오주황 인스타 : @studios_joohwang\n□ 기본 이용안내 및 유의사항 : https://vvd.bz/eVQd\n□스튜디오 전체 금연 구역입니다. 흡연은 1층 외부에서 부탁드립니다.\n□ 주차 안내\n◆ 1대 무료주차 가능하며, 건물 전용주차장 이용을 부탁드립니다.\n◆ 주차장 만차 시 인근 공영주차장 이용 부탁드리며, 비용을 전액(1대) 지원해 드립니다.`; displayGeneratedMessage(message); }
-        function handleCompleteGuideClick(booking) { const message = `안녕하세요 에이트스튜디오 주황 입니다.\n\n금일 이용은 잘 하셨는지요:)\n다음에도 좋은 촬영 되실 수 있는 공간으로\n거듭나도록 노력하겠습니다.\n\n저희 스튜디오를 방문해주셔서 다시 한 번 감사드리고, 남은 하루 행복한 시간되세요:)❤`; displayGeneratedMessage(message); }
-        function displayGeneratedMessage(message) { const outputArea = document.getElementById('message-output-area'); const outputSection = document.getElementById('message-output-section'); outputArea.value = message; outputSection.style.display = 'block'; document.getElementById('copy-feedback-msg').textContent = ''; outputSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
-        function copyGeneratedMessage() { const messageText = document.getElementById('message-output-area').value; const feedback = document.getElementById('copy-feedback-msg'); feedback.textContent = ''; if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(messageText).then(() => { feedback.textContent = '✅ 복사 완료!'; setTimeout(() => { feedback.textContent = ''; }, 2000); }).catch(err => { fallbackCopyTextToClipboard(messageText, feedback); }); } else { fallbackCopyTextToClipboard(messageText, feedback); } }
-        function fallbackCopyTextToClipboard(text, feedbackElement) { console.warn('Clipboard API 사용 불가. Fallback 시도.'); const textArea = document.getElementById('message-output-area'); textArea.readOnly = false; textArea.select(); textArea.setSelectionRange(0, 99999); try { if (document.execCommand('copy')) { feedbackElement.textContent = '✅ 복사 완료!'; setTimeout(() => { feedbackElement.textContent = ''; }, 2000); } else { feedbackElement.textContent = '❌ 복사 실패'; } } catch (err) { feedbackElement.textContent = '❌ 복사 오류'; } textArea.readOnly = true; if (window.getSelection) { window.getSelection().removeAllRanges(); } else if (document.selection) { document.selection.empty(); } }
-        async function generateErrorFromResponse(response, actionPrefix) { let errorText = `${actionPrefix} 중 서버 오류! 상태: ${response.status}`; try { const text = await response.text(); if (text.toLowerCase().includes("script function not found")) { errorText += `\n오류: Apps Script 함수 문제 또는 배포 오류.`; } else if (text.toLowerCase().includes("unexpected error")) { errorText += `\n오류: 시트 쓰기 권한 또는 데이터 형식 문제일 수 있습니다.`;} else if (text.length < 300) { errorText += `\n응답: ${text}`; } } catch (e) {} return new Error(errorText); }
+        function handleConfirmGuideClick(booking) {
+            const pTxt = `${display(booking.people)}인`;
+            const message = `<<예약확정 안내>>\n안녕하세요 ${display(booking.name)}님\n에이트스튜디오 주황 입니다.\n저희 스튜디오를 선택해주셔서 감사합니다\n예약확정 안내 말씀드려요:)\n\n□주소 : 광진구 면목로182, 중앙빌딩 301호\n\n□ 전체대관(A룸&B룸)\n□일시 : ${display(booking.date)} (${display(booking.dayOfWeek)})\n이용시간 : ${display(booking.startTime)} - ${display(booking.endTime)} (${display(booking.duration)})\n이용인원 : ${pTxt}\n사용목적 : ${display(booking.purpose)}\n\n□ 이용일 1일 전에 출입 관련 안내사항이 발송 될 예정입니다.\n□연락처 : 010.7521.8806\n카카오톡 : @에이트스튜디오주황\n인스타 : @studios_joohwang\n\n□ 기본 이용안내 및 유의사항 : https://vvd.bz/eVQd\n□ 주차 안내 ◆ 1대 무료주차 가능하며, 건물 전용주차장 이용을 부탁드립니다. ◆ 주차장 만차 시 인근 공영주차장 이용 부탁드리며, 비용을 전액(1대) 지원해 드립니다.`;
+            displayGeneratedMessage(message);
+        }
+        function handleTomorrowGuideClick(booking) {
+            const pTxt = `${display(booking.people)}인`;
+            const message = `<<이용안내>>\n안녕하세요 ${display(booking.name)}님\n에이트스튜디오 주황 입니다.\n내일 이용 안내사항 말씀드려요:)\n\n□주소 : 광진구 면목로182, 중앙빌딩 301호\n□전체대관(A룸&B룸)\n□일시 : ${display(booking.date)} (${display(booking.dayOfWeek)})\n이용시간: ${display(booking.startTime)} - ${display(booking.endTime)} (${display(booking.duration)})\n이용인원: ${pTxt}\n사용목적 : ${display(booking.purpose)}\n\n□ 현관 비밀번호 : 0654*\n□ Wifi 아이디/비밀번호 : Studios_joohwang2.4G / joohwang0321\n□연락처 : 010.7521.8806 카카오톡 : @에이트스튜디오주황 인스타 : @studios_joohwang\n□ 기본 이용안내 및 유의사항 : https://vvd.bz/eVQd\n□스튜디오 전체 금연 구역입니다. 흡연은 1층 외부에서 부탁드립니다.\n□ 주차 안내\n◆ 1대 무료주차 가능하며, 건물 전용주차장 이용을 부탁드립니다.\n◆ 주차장 만차 시 인근 공영주차장 이용 부탁드리며, 비용을 전액(1대) 지원해 드립니다.`;
+            displayGeneratedMessage(message);
+        }
+        function handleCompleteGuideClick(booking) {
+            const message = `안녕하세요 에이트스튜디오 주황 입니다.\n\n금일 이용은 잘 하셨는지요:)\n다음에도 좋은 촬영 되실 수 있는 공간으로\n거듭나도록 노력하겠습니다.\n\n저희 스튜디오를 방문해주셔서 다시 한 번 감사드리고, 남은 하루 행복한 시간되세요:)❤`;
+            displayGeneratedMessage(message);
+        }
+        function displayGeneratedMessage(message) {
+            const outputArea = document.getElementById('message-output-area'); const outputSection = document.getElementById('message-output-section');
+            outputArea.value = message; outputSection.style.display = 'block';
+            document.getElementById('copy-feedback-msg').textContent = '';
+            outputSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        function copyGeneratedMessage() {
+            const messageText = document.getElementById('message-output-area').value; const feedback = document.getElementById('copy-feedback-msg');
+            feedback.textContent = '';
+            if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(messageText).then(() => { feedback.textContent = '✅ 복사 완료!'; setTimeout(() => { feedback.textContent = ''; }, 2000); }).catch(err => { fallbackCopyTextToClipboard(messageText, feedback); });
+            } else { fallbackCopyTextToClipboard(messageText, feedback); }
+        }
+        function fallbackCopyTextToClipboard(text, feedbackElement) {
+             const textArea = document.getElementById('message-output-area'); textArea.readOnly = false; textArea.select(); textArea.setSelectionRange(0, 99999);
+             try { if (document.execCommand('copy')) { feedbackElement.textContent = '✅ 복사 완료!'; setTimeout(() => { feedbackElement.textContent = ''; }, 2000); } else { feedbackElement.textContent = '❌ 복사 실패'; }
+             } catch (err) { feedbackElement.textContent = '❌ 복사 오류'; }
+             textArea.readOnly = true;
+             if (window.getSelection) { window.getSelection().removeAllRanges(); } else if (document.selection) { document.selection.empty(); }
+         }
+        async function generateErrorFromResponse(response, actionPrefix) {
+            let errorText = `${actionPrefix} 중 서버 오류! 상태: ${response.status}`;
+            try { const text = await response.text(); if (text.toLowerCase().includes("script function not found")) { errorText += `\n오류: Apps Script 함수 문제 또는 배포 오류.`; } else if (text.toLowerCase().includes("unexpected error")) { errorText += `\n오류: 시트 쓰기 권한 또는 데이터 형식 문제일 수 있습니다.`;} else if (text.length < 300) { errorText += `\n응답: ${text}`; } } catch (e) {}
+            return new Error(errorText);
+        }
     </script>
 </body>
 </html>
