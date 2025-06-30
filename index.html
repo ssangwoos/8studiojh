@@ -93,12 +93,7 @@
     </div>
 
     <script>
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // !!! 여기에 Google Apps Script 웹 앱 URL을 정확히 붙여넣으세요 !!!
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxR_c6yX2cUp9TZ5Xr4b0w6-h-JQh1VJwhyskqlVs8FW1Zpcc4T5QEKKFBazaNMMPrkSA/exec';
- // <<<---------- 여기!!!
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
+        const WEB_APP_URL = 'YOUR_WEB_APP_URL_HERE';
         let currentBookingsData = {};
         let selectedListItem = null;
         let currentlyDisplayedBookingIndex = null;
@@ -112,17 +107,12 @@
                 document.getElementById('date-picker').value = todayStr;
                 populateHourSelect('modal-start-hour');
                 populateHourSelect('modal-end-hour');
-                
                 document.getElementById('fetch-btn').addEventListener('click', fetchBookings);
                 document.getElementById('add-booking-btn').addEventListener('click', () => openBookingModal(false, null));
                 document.getElementById('modal-submit-btn').addEventListener('click', masterSubmitHandler);
                 document.getElementById('modal-cancel-btn').addEventListener('click', closeBookingModal);
                 document.getElementById('copy-message-button').addEventListener('click', copyGeneratedMessage);
-
-                document.getElementById('booking-form').addEventListener('submit', (event) => {
-                    event.preventDefault();
-                    masterSubmitHandler();
-                });
+                document.getElementById('booking-form').addEventListener('submit', (event) => { event.preventDefault(); masterSubmitHandler(); });
             } catch (error) { console.error("페이지 초기화 중 오류:", error); }
         });
 
@@ -163,7 +153,8 @@
                 modalTitle.textContent = '✏️ 예약 수정'; submitBtn.textContent = '수정 완료';
                 form.dataset.mode = 'edit'; form.dataset.rowIndex = bookingData.rowIndex;
                 document.getElementById('modal-name').value = bookingData.name || ''; document.getElementById('modal-phone').value = bookingData.phone || ''; document.getElementById('modal-date').value = bookingData.date || '';
-                const [startHour, startMinute] = (bookingData.startTime || '00:00').split(':'); const [endHour, endMinute] = (bookingData.endTime || '00:00').split(':');
+                const [startHour, startMinute] = (bookingData.startTime || '00:00').split(':');
+                const [endHour, endMinute] = (bookingData.endTime || '00:00').split(':');
                 document.getElementById('modal-start-hour').value = startHour; document.getElementById('modal-start-minute').value = startMinute; document.getElementById('modal-end-hour').value = endHour; document.getElementById('modal-end-minute').value = endMinute;
                 document.getElementById('modal-people').value = bookingData.people || ''; document.getElementById('modal-purpose').value = bookingData.purpose || ''; document.getElementById('modal-amount').value = bookingData.amount || ''; document.getElementById('modal-site').value = bookingData.site || '';
             } else {
@@ -186,7 +177,7 @@
                 const response = await fetch(`${WEB_APP_URL}?date=${selectedDate}`);
                 if (!response.ok) { throw await generateErrorFromResponse(response, '조회'); }
                 const data = await response.json();
-                if (data.status === 'error') { throw new Error(`서버 오류: ${data.message}`); }
+                if (data.status === 'error') { throw new Error(data.message); }
                 currentBookingsData = data; displayResults(data);
                 if (data.processingErrors && data.processingErrors.length > 0) {
                     const errorDisplay = document.getElementById('error-display');
@@ -235,8 +226,8 @@
             const bookingData = sourceList.find(b => b.rowIndex && b.rowIndex.toString() === rowIndex.toString()); if (!bookingData) return;
             const isAlreadyDisplayed = (currentlyDisplayedListType === listType && currentlyDisplayedBookingIndex && currentlyDisplayedBookingIndex.toString() === rowIndex.toString());
             const detailsSection = document.getElementById('booking-details'); const messageSection = document.getElementById('message-output-section');
-            if (isAlreadyDisplayed && detailsSection.style.display === 'block') {
-                detailsSection.style.display = 'none'; messageSection.style.display = 'none'; currentlyDisplayedBookingIndex = null; currentlyDisplayedListType = null;
+            if (isAlreadyDisplayed) {
+                detailsSection.style.display = 'none'; messageSection.style.display = 'none'; currentlyDisplayedBookingIndex = null;
                 if (selectedListItem) { selectedListItem.classList.remove('selected'); selectedListItem = null; }
             } else {
                 if (selectedListItem) { selectedListItem.classList.remove('selected'); }
@@ -260,7 +251,7 @@
         function handleEditBookingClick(booking) {
             const today = new Date(); const bookingDate = new Date(booking.date);
             today.setHours(0, 0, 0, 0); bookingDate.setHours(0, 0, 0, 0);
-            const oneDay = 24 * 60 * 60 * 1000;
+            const oneDay = 86400000;
             if ((bookingDate.getTime() - today.getTime()) < oneDay * 2) { alert('예약 수정은 이용일 기준 이틀 전까지만 가능합니다.\n(이용일 하루 전 또는 당일은 수정이 불가합니다.)'); return; }
             openBookingModal(true, booking);
         }
@@ -310,13 +301,13 @@
         }
 
         function handleConfirmGuideClick(booking) {
-            const pVal = booking.people; const pTxt = (pVal !== null && !isNaN(parseInt(pVal))) ? `${parseInt(pVal)}인` : '-';
+            const pTxt = `${display(booking.people)}인`;
             const message = `<<예약확정 안내>>\n안녕하세요 ${display(booking.name)}님\n에이트스튜디오 주황 입니다.\n저희 스튜디오를 선택해주셔서 감사합니다\n예약확정 안내 말씀드려요:)\n\n□주소 : 광진구 면목로182, 중앙빌딩 301호\n\n□ 전체대관(A룸&B룸)\n□일시 : ${display(booking.date)} (${display(booking.dayOfWeek)})\n이용시간 : ${display(booking.startTime)} - ${display(booking.endTime)} (${display(booking.duration)})\n이용인원 : ${pTxt}\n사용목적 : ${display(booking.purpose)}\n\n□ 이용일 1일 전에 출입 관련 안내사항이 발송 될 예정입니다.\n□연락처 : 010.7521.8806\n카카오톡 : @에이트스튜디오주황\n인스타 : @studios_joohwang\n\n□ 기본 이용안내 및 유의사항 : https://vvd.bz/eVQd\n□ 주차 안내 ◆ 1대 무료주차 가능하며, 건물 전용주차장 이용을 부탁드립니다. ◆ 주차장 만차 시 인근 공영주차장 이용 부탁드리며, 비용을 전액(1대) 지원해 드립니다.`;
             displayGeneratedMessage(message);
         }
         function handleTomorrowGuideClick(booking) {
-            const pVal = booking.people; const pTxt = (pVal !== null && !isNaN(parseInt(pVal))) ? `${parseInt(pVal)}인` : '-';
-            const message = `<<이용안내>>\n안녕하세요 ${display(booking.name)}님\n에이트스튜디오 주황 입니다.\n내일 이용 안내사항 말씀드려요:)\n\n□주소 : 광진구 면목로182, 중앙빌딩 301호\n□전체대관(A룸&B룸)\n□일시 : ${display(booking.date)} (${display(booking.dayOfWeek)})\n이용시간: ${display(booking.startTime)} - ${display(booking.endTime)} (${display(booking.duration)})\n이용인원: ${pTxt}\n사용목적: ${display(booking.purpose)}\n\n□ 현관 비밀번호 : 0654*\n□ Wifi 아이디/비밀번호 : Studios_joohwang2.4G / joohwang0321\n□연락처 : 010.7521.8806 카카오톡 : @에이트스튜디오주황 인스타 : @studios_joohwang\n□ 기본 이용안내 및 유의사항 : https://vvd.bz/eVQd\n□스튜디오 전체 금연 구역입니다. 흡연은 1층 외부에서 부탁드립니다.\n□ 주차 안내\n◆ 1대 무료주차 가능하며, 건물 전용주차장 이용을 부탁드립니다.\n◆ 주차장 만차 시 인근 공영주차장 이용 부탁드리며, 비용을 전액(1대) 지원해 드립니다.`;
+            const pTxt = `${display(booking.people)}인`;
+            const message = `<<이용안내>>\n안녕하세요 ${display(booking.name)}님\n에이트스튜디오 주황 입니다.\n내일 이용 안내사항 말씀드려요:)\n\n□주소 : 광진구 면목로182, 중앙빌딩 301호\n□전체대관(A룸&B룸)\n□일시 : ${display(booking.date)} (${display(booking.dayOfWeek)})\n이용시간: ${display(booking.startTime)} - ${display(booking.endTime)} (${display(booking.duration)})\n이용인원: ${pTxt}\n사용목적 : ${display(booking.purpose)}\n\n□ 현관 비밀번호 : 0654*\n□ Wifi 아이디/비밀번호 : Studios_joohwang2.4G / joohwang0321\n□연락처 : 010.7521.8806 카카오톡 : @에이트스튜디오주황 인스타 : @studios_joohwang\n□ 기본 이용안내 및 유의사항 : https://vvd.bz/eVQd\n□스튜디오 전체 금연 구역입니다. 흡연은 1층 외부에서 부탁드립니다.\n□ 주차 안내\n◆ 1대 무료주차 가능하며, 건물 전용주차장 이용을 부탁드립니다.\n◆ 주차장 만차 시 인근 공영주차장 이용 부탁드리며, 비용을 전액(1대) 지원해 드립니다.`;
             displayGeneratedMessage(message);
         }
         function handleCompleteGuideClick(booking) {
