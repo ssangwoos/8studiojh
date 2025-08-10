@@ -368,12 +368,12 @@
 
         function handleConfirmGuideClick(booking) {
             const pTxt = `${display(booking.people)}인`;
-            const message = `<<예약확정 안내>>\n안녕하세요 ${display(booking.name)}님\n에이트스튜디오 주황 입니다.\n저희 스튜디오를 선택해주셔서 감사합니다\n예약확정 안내 말씀드려요:)\n\n□주소 : 광진구 면목로182, 중앙빌딩 301호\n\n□ 전체대관(A룸&B룸)\n□일시 : ${display(booking.date)} (${display(booking.dayOfWeek)})\n이용시간 : ${display(booking.startTime)} - ${display(booking.endTime)} (${display(booking.duration)})\n이용인원 : ${pTxt}\n사용목적 : ${display(booking.purpose)}\n\n□ 이용일 1일 전에 출입 관련 안내사항이 발송 될 예정입니다.\n□연락처 : 010.7521.8806\n카카오톡 : @에이트스튜디오주황\n인스타 : @studios_joohwang\n\n□ 기본 이용안내 및 유의사항 : https://blog.naver.com/drugotc/223514608931\n□ 주차 안내 ◆ 1대 무료주차 가능하며, 건물 전용주차장 이용을 부탁드립니다. ◆ 주차장 만차 시 인근 공영주차장 이용 부탁드리며, 비용을 전액(1대) 지원해 드립니다.`;
+            const message = `<<예약확정 안내>>\n안녕하세요 ${display(booking.name)}님\n에이트스튜디오 주황 입니다.\n저희 스튜디오를 선택해주셔서 감사합니다\n예약확정 안내 말씀드려요:)\n\n□주소 : 광진구 면목로182, 중앙빌딩 301호\n\n□ 전체대관(A룸&B룸)\n□일시 : ${display(booking.date)} (${display(booking.dayOfWeek)})\n이용시간 : ${display(booking.startTime)} - ${display(booking.endTime)} (${display(booking.duration)})\n이용인원 : ${pTxt}\n사용목적 : ${display(booking.purpose)}\n\n□ 이용일 1일 전에 출입 관련 안내사항이 발송 될 예정입니다.\n□연락처 : 010.7521.8806\n카카오톡 : @에이트스튜디오주황\n인스타 : @studios_joohwang\n\n□ 기본 이용안내 및 유의사항 : https://harmonious-cloche-c1a.notion.site/24b1e2a4622e8014b50cd87478f78a0a \n□ 주차 안내 ◆ 1대 무료주차 가능하며, 건물 전용주차장 이용을 부탁드립니다. ◆ 주차장 만차 시 인근 공영주차장 이용 부탁드리며, 비용을 전액(1대) 지원해 드립니다.`;
             displayGeneratedMessage(message);
         }
         function handleTomorrowGuideClick(booking) {
             const pTxt = `${display(booking.people)}인`;
-            const message = `<<이용안내>>\n안녕하세요 ${display(booking.name)}님\n에이트스튜디오 주황 입니다.\n내일 이용 안내사항 말씀드려요:)\n\n□주소 : 광진구 면목로182, 중앙빌딩 301호\n□전체대관(A룸&B룸)\n□일시 : ${display(booking.date)} (${display(booking.dayOfWeek)})\n이용시간: ${display(booking.startTime)} - ${display(booking.endTime)} (${display(booking.duration)})\n이용인원: ${pTxt}\n사용목적 : ${display(booking.purpose)}\n\n□ 현관 비밀번호 : 0654*\n□ Wifi 아이디/비밀번호 : Studios_joohwang2.4G / joohwang0321\n□연락처 : 010.7521.8806 카카오톡 : @에이트스튜디오주황 인스타 : @studios_joohwang\n□ 기본 이용안내 및 유의사항 : https://blog.naver.com/drugotc/223514608931\n□스튜디오 전체 금연 구역입니다. 흡연은 1층 외부에서 부탁드립니다.\n□ 주차 안내\n◆ 1대 무료주차 가능하며, 건물 전용주차장 이용을 부탁드립니다.\n◆ 주차장 만차 시 인근 공영주차장 이용 부탁드리며, 비용을 전액(1대) 지원해 드립니다.`;
+            const message = `<<이용안내>>\n안녕하세요 ${display(booking.name)}님\n에이트스튜디오 주황 입니다.\n내일 이용 안내사항 말씀드려요:)\n\n□주소 : 광진구 면목로182, 중앙빌딩 301호\n□전체대관(A룸&B룸)\n□일시 : ${display(booking.date)} (${display(booking.dayOfWeek)})\n이용시간: ${display(booking.startTime)} - ${display(booking.endTime)} (${display(booking.duration)})\n이용인원: ${pTxt}\n사용목적 : ${display(booking.purpose)}\n\n□ 현관 비밀번호 : 0654*\n□ Wifi 아이디/비밀번호 : Studios_joohwang2.4G / joohwang0321\n□연락처 : 010.7521.8806 카카오톡 : @에이트스튜디오주황 인스타 : @studios_joohwang\n□ 기본 이용안내 및 유의사항 : https://harmonious-cloche-c1a.notion.site/24b1e2a4622e8014b50cd87478f78a0a \n□스튜디오 전체 금연 구역입니다. 흡연은 1층 외부에서 부탁드립니다.\n□ 주차 안내\n◆ 1대 무료주차 가능하며, 건물 전용주차장 이용을 부탁드립니다.\n◆ 주차장 만차 시 인근 공영주차장 이용 부탁드리며, 비용을 전액(1대) 지원해 드립니다.`;
             displayGeneratedMessage(message);
         }
         function handleCompleteGuideClick(booking) {
@@ -407,3 +407,4 @@
     </script>
 </body>
 </html>
+
